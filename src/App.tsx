@@ -1,0 +1,913 @@
+
+import { useEffect, useState } from 'react'
+import './index.css'
+import {
+  getCourseProgress,
+  saveCourseProgress,
+  saveAssessmentResult,
+} from './services/api'
+
+type Course = {
+  id: number
+  title: string
+  category: string
+  level: string
+  duration: string
+  progress: number
+  color: string
+}
+
+type Page = 'Home' | 'Courses' | 'Assessment' | 'AI Tutor' | 'Jobs'
+
+const initialCourses: Course[] = [
+  {
+    id: 1,
+    title: 'Python Programming',
+    category: 'Programming',
+    level: 'Beginner',
+    duration: '6 weeks',
+    progress: 65,
+    color: '#e5eaff',
+  },
+  {
+    id: 2,
+    title: 'Web Development',
+    category: 'Technology',
+    level: 'Beginner',
+    duration: '8 weeks',
+    progress: 35,
+    color: '#dff7ed',
+  },
+  {
+    id: 3,
+    title: 'Communication Skills',
+    category: 'Soft Skills',
+    level: 'All levels',
+    duration: '4 weeks',
+    progress: 80,
+    color: '#fff0d8',
+  },
+  {
+    id: 4,
+    title: 'Data Structures',
+    category: 'Programming',
+    level: 'Intermediate',
+    duration: '6 weeks',
+    progress: 10,
+    color: '#f5e5ff',
+  },
+]
+
+const jobs = [
+  {
+    title: 'Frontend Developer Intern',
+    company: 'Sample Technology Company',
+    skills: 'HTML, CSS, JavaScript, React',
+    type: 'Internship',
+  },
+  {
+    title: 'Python Developer Intern',
+    company: 'Sample Software Company',
+    skills: 'Python, SQL, Problem Solving',
+    type: 'Internship',
+  },
+  {
+    title: 'Junior Web Developer',
+    company: 'Sample Digital Company',
+    skills: 'HTML, CSS, JavaScript',
+    type: 'Entry level',
+  },
+]
+
+const questions = [
+  {
+    question: 'Which language is commonly used for web page structure?',
+    options: ['Python', 'HTML', 'SQL', 'C'],
+    answer: 'HTML',
+  },
+  {
+    question: 'Which Python keyword defines a function?',
+    options: ['function', 'define', 'def', 'fun'],
+    answer: 'def',
+  },
+  {
+    question: 'Which of these is a database query language?',
+    options: ['SQL', 'CSS', 'HTML', 'Photoshop'],
+    answer: 'SQL',
+  },
+]
+
+function App() {
+  const [page, setPage] = useState<Page>('Home')
+  const [courses, setCourses] = useState<Course[]>(initialCourses)
+  
+const [progressMessage, setProgressMessage] = useState('')
+  const [assessmentMessage, setAssessmentMessage] = useState('')
+
+useEffect(() => {
+  let cancelled = false
+
+  async function loadProgress() {
+    try {
+      const records = await getCourseProgress()
+
+      if (cancelled) return
+
+      setCourses((previous) =>
+        previous.map((course) => {
+          const saved = records.find(
+            (record) => record.course_title === course.title,
+          )
+
+          return saved
+            ? { ...course, progress: saved.progress }
+            : course
+        }),
+      )
+    } catch (error) {
+      console.error('Could not load saved progress:', error)
+    }
+  }
+
+  loadProgress()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
+  const [search, setSearch] = useState('')
+  const [language, setLanguage] = useState<'English' | 'à°¤à±†à°²à±à°—à±'>('English')
+
+  const [backendStatus, setBackendStatus] =
+    useState('Checking backend...')
+
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [selectedAnswer, setSelectedAnswer] = useState('')
+  const [quizScore, setQuizScore] = useState<number | null>(null)
+  const [quizFinished, setQuizFinished] = useState(false)
+
+  const [tutorQuestion, setTutorQuestion] = useState('')
+  const [tutorMessages, setTutorMessages] = useState<
+    { question: string; answer: string }[]
+  >([])
+
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/health')
+
+        if (!response.ok) {
+          throw new Error('Backend request failed')
+        }
+
+        const data = await response.json()
+        setBackendStatus(`Backend: ${data.status}`)
+      } catch {
+        setBackendStatus('Backend connection failed')
+      }
+    }
+
+    checkBackend()
+  }, [])
+
+  const telugu = language === 'à°¤à±†à°²à±à°—à±'
+
+  const labels: Record<string, string> = telugu
+    ? {
+        Home: 'à°¹à±‹à°®à±',
+        Courses: 'à°•à±‹à°°à±à°¸à±à°²à±',
+        Assessment: 'à°ªà°°à±€à°•à±à°·',
+        'AI Tutor': 'AI à°—à±à°°à±à°µà±',
+        Jobs: 'à°‰à°¦à±à°¯à±‹à°—à°¾à°²à±',
+        welcome: 'à°®à±€ à°­à°µà°¿à°·à±à°¯à°¤à±à°¤à±à°¨à± à°¨à°¿à°°à±à°®à°¿à°‚à°šà±à°•à±‹à°‚à°¡à°¿',
+        subtitle: 'à°¨à±‡à°°à±à°šà±à°•à±‹à°‚à°¡à°¿. à°¨à±ˆà°ªà±à°£à±à°¯à°¾à°²à°¨à± à°ªà±†à°‚à°šà±à°•à±‹à°‚à°¡à°¿. à°‰à°¦à±à°¯à±‹à°—à°‚ à°ªà±Šà°‚à°¦à°‚à°¡à°¿.',
+        continue: 'à°¨à±‡à°°à±à°šà±à°•à±‹à°µà°¡à°‚ à°•à±Šà°¨à°¸à°¾à°—à°¿à°‚à°šà°‚à°¡à°¿',
+        allCourses: 'à°…à°¨à±à°¨à°¿ à°•à±‹à°°à±à°¸à±à°²à±',
+        search: 'à°•à±‹à°°à±à°¸à±à°²à°¨à± à°µà±†à°¤à°•à°‚à°¡à°¿...',
+      }
+    : {
+        Home: 'Home',
+        Courses: 'Courses',
+        Assessment: 'Assessment',
+        'AI Tutor': 'AI Tutor',
+        Jobs: 'Jobs',
+        welcome: 'Build skills. Build your future.',
+        subtitle: 'Learn new skills and prepare for your dream career.',
+        continue: 'Continue Learning',
+        allCourses: 'Explore Courses',
+        search: 'Search courses...',
+      }
+
+  const filteredCourses = courses.filter((course) =>
+    `${course.title} ${course.category}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  )
+
+  
+async function updateProgress(id: number) {
+  const course = courses.find((item) => item.id === id)
+
+  if (!course || course.progress >= 100) return
+
+  const nextProgress = Math.min(course.progress + 10, 100)
+
+  setProgressMessage('')
+
+  // Update the screen immediately.
+  setCourses((previous) =>
+    previous.map((item) =>
+      item.id === id
+        ? { ...item, progress: nextProgress }
+        : item,
+    ),
+  )
+
+  try {
+    await saveCourseProgress(course.title, nextProgress)
+    setProgressMessage(`${course.title}: progress saved successfully.`)
+  } catch (error) {
+    console.error('Could not save progress:', error)
+    setProgressMessage('Could not save progress. Check the backend connection.')
+  }
+}
+
+  async function answerQuestion() {
+    if (!selectedAnswer) return
+
+    const isCorrect =
+      selectedAnswer === questions[currentQuestion].answer
+
+    const newScore = (quizScore ?? 0) + (isCorrect ? 1 : 0)
+    setQuizScore(newScore)
+    setSelectedAnswer('')
+    setAssessmentMessage('')
+
+    if (currentQuestion + 1 >= questions.length) {
+      setQuizFinished(true)
+
+      try {
+        await saveAssessmentResult(
+          'Skill Assessment',
+          newScore,
+          questions.length,
+        )
+        setAssessmentMessage('Assessment result saved successfully.')
+      } catch (error) {
+        console.error('Could not save assessment result:', error)
+        setAssessmentMessage(
+          'Your result is shown, but could not be saved. Check the backend connection.',
+        )
+      }
+    } else {
+      setCurrentQuestion((previous) => previous + 1)
+    }
+  }
+
+  function restartQuiz() {
+    setCurrentQuestion(0)
+    setSelectedAnswer('')
+    setQuizScore(null)
+    setQuizFinished(false)
+    setAssessmentMessage('')
+  }
+
+  function askTutor() {
+    const question = tutorQuestion.trim()
+    if (!question) return
+
+    let answer =
+      'Start by breaking your question into smaller steps. Learn the basic concept, practise a simple example, and then try a small project.'
+
+    const normalized = question.toLowerCase()
+
+    if (normalized.includes('python')) {
+      answer =
+        'Python is a beginner-friendly programming language. Start with variables, data types, conditions, loops, functions, and lists. Practise by writing a small program every day.'
+    } else if (
+      normalized.includes('resume') ||
+      normalized.includes('job')
+    ) {
+      answer =
+        'Build a one-page resume with your education, technical skills, projects, and certifications. Create 2â€“3 practical projects, add clear descriptions of your contribution, and practise explaining each project.'
+    } else if (
+      normalized.includes('interview')
+    ) {
+      answer =
+        'Prepare a short self-introduction, revise your core subjects, practise coding questions, and prepare to explain your projects. Try answering questions aloud and improve your answers after each practice session.'
+    } else if (
+      normalized.includes('html') ||
+      normalized.includes('web')
+    ) {
+      answer =
+        'For web development, learn HTML for page structure, CSS for styling, and JavaScript for interactivity. Then build a personal portfolio and a responsive webpage.'
+    } else if (
+      normalized.includes('communication')
+    ) {
+      answer =
+        'Practise speaking for five minutes daily. Read a short article aloud, learn a few new words, and explain one topic in your own words. Focus on clear sentences rather than speaking fast.'
+    }
+
+    setTutorMessages((previous) => [
+      ...previous,
+      { question, answer },
+    ])
+    setTutorQuestion('')
+  }
+
+  function renderHome() {
+    // Recommend the unfinished course with the lowest current progress.
+    const recommendedCourse = [...courses]
+      .filter((course) => course.progress < 100)
+      .sort((a, b) => a.progress - b.progress)[0]
+
+    return (
+      <>
+        <section className="welcome-banner">
+          <div className="welcome-content">
+            <span className="eyebrow">YOUR LEARNING JOURNEY</span>
+            <h1>{labels.welcome}</h1>
+            <p>{labels.subtitle}</p>
+            <button
+              className="primary-button"
+              onClick={() => setPage('Courses')}
+            >
+              {labels.continue} â†’
+            </button>
+          </div>
+          <div className="welcome-illustration" aria-hidden="true">
+            <div className="illustration-circle">ðŸŽ“</div>
+            <div className="illustration-caption">
+              Learn today. Lead tomorrow.
+            </div>
+          </div>
+        </section>
+
+        <section className="stats-grid">
+          <div className="stat-card">
+            <span className="stat-icon">ðŸ“š</span>
+            <div>
+              <p>Available Courses</p>
+              <h2>{courses.length}</h2>
+            </div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon">ðŸŽ¯</span>
+            <div>
+              <p>Courses Started</p>
+              <h2>{courses.filter((c) => c.progress > 0).length}</h2>
+            </div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon">ðŸ†</span>
+            <div>
+              <p>Courses Completed</p>
+              <h2>{courses.filter((c) => c.progress === 100).length}</h2>
+            </div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon">âš¡</span>
+            <div>
+              <p>Average Progress</p>
+              <h2>
+                {Math.round(
+                  courses.reduce((sum, c) => sum + c.progress, 0) /
+                    Math.max(courses.length, 1),
+                )}
+                %
+              </h2>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-heading">
+          <div>
+            <span className="eyebrow">YOUR PERSONAL PATH</span>
+            <h2>{labels.continue}</h2>
+          </div>
+          <button className="text-button" onClick={() => setPage('Courses')}>
+            View all â†’
+          </button>
+        </section>
+
+        <div className="course-grid">
+          {courses
+            .filter((course) => course.progress > 0 && course.progress < 100)
+            .slice(0, 3)
+            .map((course) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                onContinue={updateProgress}
+              />
+            ))}
+        </div>
+        {progressMessage && (
+          <p className="save-message" role="status">{progressMessage}</p>
+        )}
+
+        {recommendedCourse && (
+          <section
+            style={{
+              margin: '28px 0',
+              padding: '24px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #eef2ff, #ecfdf5)',
+              border: '1px solid #dbeafe',
+            }}
+          >
+            <span className="eyebrow">PERSONALIZED FOR YOU</span>
+            <h2 style={{ margin: '10px 0' }}>
+              ✨ Recommended next: {recommendedCourse.title}
+            </h2>
+            <p style={{ color: '#475569', lineHeight: 1.6 }}>
+              {recommendedCourse.progress === 0
+                ? 'You have not started this course yet. Begin with the basics and build your skills step by step.'
+                : recommendedCourse.progress < 30
+                  ? 'This course needs more attention. Focus on its fundamentals and practise regularly.'
+                  : 'Continue learning this course to build your skills and move closer to completion.'}
+            </p>
+
+            <div style={{ margin: '16px 0' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '8px',
+                }}
+              >
+                <span>Current progress</span>
+                <strong>{recommendedCourse.progress}%</strong>
+              </div>
+              <div
+                style={{
+                  height: '8px',
+                  background: '#dbe4ee',
+                  borderRadius: '99px',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${recommendedCourse.progress}%`,
+                    height: '100%',
+                    background: '#4f46e5',
+                    borderRadius: '99px',
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            </div>
+
+            <button
+              className="primary-button"
+              onClick={() => updateProgress(recommendedCourse.id)}
+            >
+              Continue Recommended Course →
+            </button>
+          </section>
+        )}
+
+        <section className="quick-actions">
+          <h2>Ready for your next step?</h2>
+          <p>Check your skills, practise with the tutor, or explore careers.</p>
+          <div className="action-buttons">
+            <button
+              className="secondary-button"
+              onClick={() => setPage('Assessment')}
+            >
+              ðŸ“ Take Assessment
+            </button>
+            <button
+              className="secondary-button"
+              onClick={() => setPage('AI Tutor')}
+            >
+              âœ¨ Ask AI Tutor
+            </button>
+            <button
+              className="secondary-button"
+              onClick={() => setPage('Jobs')}
+            >
+              ðŸ’¼ Explore Careers
+            </button>
+          </div>
+        </section>
+      </>
+    )
+  }
+
+  function renderCourses() {
+    return (
+      <>
+        <section className="page-intro">
+          <span className="eyebrow">LEARN AT YOUR OWN PACE</span>
+          <h1>{labels.allCourses}</h1>
+          <p>Build practical skills for education and employment.</p>
+        </section>
+
+        <div className="search-bar">
+          <span>ðŸ”Ž</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={labels.search}
+            aria-label="Search courses"
+          />
+          {search && (
+            <button className="text-button" onClick={() => setSearch('')}>
+              Clear
+            </button>
+          )}
+        </div>
+
+        {progressMessage && (
+          <p className="save-message" role="status">{progressMessage}</p>
+        )}
+
+        <div className="course-grid">
+          {filteredCourses.map((course) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              onContinue={updateProgress}
+            />
+          ))}
+        </div>
+
+        {filteredCourses.length === 0 && (
+          <div className="empty-state">
+            <span>ðŸ”Ž</span>
+            <h3>No courses found</h3>
+            <p>Try another search term.</p>
+          </div>
+        )}
+      </>
+    )
+  }
+
+  function renderAssessment() {
+    const question = questions[currentQuestion]
+
+    return (
+      <>
+        <section className="page-intro">
+          <span className="eyebrow">KNOW YOUR STRENGTHS</span>
+          <h1>Skill Assessment</h1>
+          <p>Answer these questions to practise your technical basics.</p>
+        </section>
+
+        <section className="assessment-card">
+          {quizFinished ? (
+            <div className="quiz-result">
+              <div className="result-icon">ðŸ†</div>
+              <h2>Assessment complete!</h2>
+              <p>
+                Your score: <strong>{quizScore ?? 0}</strong> out of{' '}
+                {questions.length}
+              </p>
+              <p>
+                {((quizScore ?? 0) / questions.length) * 100 >= 70
+                  ? 'Great work! Keep practising to strengthen your skills.'
+                  : 'Keep learning and try again. Every attempt helps you improve.'}
+              </p>
+              {assessmentMessage && (
+                <p role="status" className="save-message">
+                  {assessmentMessage}
+                </p>
+              )}
+              <button className="primary-button" onClick={restartQuiz}>
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="question-progress">
+                <span>
+                  Question {currentQuestion + 1} of {questions.length}
+                </span>
+                <span>
+                  {Math.round(
+                    (currentQuestion / questions.length) * 100,
+                  )}
+                  % complete
+                </span>
+              </div>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${(currentQuestion / questions.length) * 100}%`,
+                  }}
+                />
+              </div>
+              <h2>{question.question}</h2>
+              <div className="answer-options">
+                {question.options.map((option) => (
+                  <button
+                    key={option}
+                    className={`answer-option ${
+                      selectedAnswer === option ? 'selected' : ''
+                    }`}
+                    onClick={() => setSelectedAnswer(option)}
+                  >
+                    <span className="option-circle">
+                      {selectedAnswer === option ? 'â—' : 'â—‹'}
+                    </span>
+                    {option}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="primary-button"
+                onClick={answerQuestion}
+                disabled={!selectedAnswer}
+              >
+                {currentQuestion === questions.length - 1
+                  ? 'Finish Assessment'
+                  : 'Next Question â†’'}
+              </button>
+            </>
+          )}
+        </section>
+      </>
+    )
+  }
+
+  function renderTutor() {
+    return (
+      <>
+        <section className="page-intro">
+          <span className="eyebrow">LEARN WITH GUIDANCE</span>
+          <h1>AI Learning Tutor</h1>
+          <p>
+            Ask about programming, resumes, interviews, or learning strategies.
+          </p>
+        </section>
+
+        <section className="tutor-card">
+          <div className="tutor-header">
+            <div className="tutor-avatar">âœ¨</div>
+            <div>
+              <h2>SkillBridge Learning Assistant</h2>
+              <p>Demo tutor Â· Instant practice guidance</p>
+            </div>
+          </div>
+
+          <div className="tutor-disclaimer">
+            This version uses sample responses. It is not yet connected to a
+            live AI model.
+          </div>
+
+          <div className="suggestion-list">
+            <span>Try asking:</span>
+            {[
+              'How do I learn Python?',
+              'How can I prepare for interviews?',
+              'How do I improve communication?',
+            ].map((suggestion) => (
+              <button
+                key={suggestion}
+                className="suggestion-chip"
+                onClick={() => setTutorQuestion(suggestion)}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+
+          <div className="tutor-messages" aria-live="polite">
+            {tutorMessages.map((message, index) => (
+              <div className="message-pair" key={`${message.question}-${index}`}>
+                <div className="user-message">
+                  <strong>You</strong>
+                  <p>{message.question}</p>
+                </div>
+                <div className="assistant-message">
+                  <strong>âœ¨ Learning Assistant</strong>
+                  <p>{message.answer}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form
+            className="tutor-input-row"
+            onSubmit={(event) => {
+              event.preventDefault()
+              askTutor()
+            }}
+          >
+            <input
+              value={tutorQuestion}
+              onChange={(event) => setTutorQuestion(event.target.value)}
+              placeholder="Ask your learning question..."
+              aria-label="Ask the tutor a question"
+            />
+            <button className="primary-button" type="submit">
+              Send â†‘
+            </button>
+          </form>
+        </section>
+      </>
+    )
+  }
+
+  function renderJobs() {
+    return (
+      <>
+        <section className="page-intro">
+          <span className="eyebrow">YOUR NEXT OPPORTUNITY</span>
+          <h1>Career Opportunities</h1>
+          <p>
+            Explore sample roles and identify skills you can develop.
+          </p>
+        </section>
+
+        <div className="notice-banner">
+          â„¹ï¸ These are sample job listings for demonstration, not verified live
+          vacancies. Check employers' official websites before applying.
+        </div>
+
+        <div className="job-list">
+          {jobs.map((job) => (
+            <article className="job-card" key={job.title}>
+              <div className="job-icon">ðŸ’¼</div>
+              <div className="job-details">
+                <span className="job-type">{job.type}</span>
+                <h2>{job.title}</h2>
+                <p>{job.company}</p>
+                <div className="skill-tags">
+                  {job.skills.split(', ').map((skill) => (
+                    <span key={skill}>{skill}</span>
+                  ))}
+                </div>
+              </div>
+              <button
+                className="secondary-button"
+                onClick={() => setPage('Courses')}
+              >
+                Build Skills
+              </button>
+            </article>
+          ))}
+        </div>
+      </>
+    )
+  }
+
+  const pageContent = {
+    Home: renderHome,
+    Courses: renderCourses,
+    Assessment: renderAssessment,
+    'AI Tutor': renderTutor,
+    Jobs: renderJobs,
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-logo">S</div>
+          <div>
+            <h2>SkillBridge<span>AI</span></h2>
+            <p>Learn Â· Grow Â· Succeed</p>
+          </div>
+        </div>
+
+        <div className="sidebar-label">MENU</div>
+
+        <nav className="navigation">
+          {(
+            [
+              ['Home', 'âŒ‚'],
+              ['Courses', 'â–¤'],
+              ['Assessment', 'âœ“'],
+              ['AI Tutor', 'âœ§'],
+              ['Jobs', 'â†—'],
+            ] as [Page, string][]
+          ).map(([item, icon]) => (
+            <button
+              key={item}
+              className={`nav-item ${page === item ? 'active' : ''}`}
+              onClick={() => setPage(item)}
+            >
+              <span className="nav-icon">{icon}</span>
+              <span>{labels[item]}</span>
+              {page === item && <span className="nav-indicator" />}
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-help">
+            <div className="help-icon">ðŸ’¡</div>
+            <strong>Keep growing!</strong>
+            <p>Small steps every day create big results.</p>
+          </div>
+          <div className="profile">
+            <div className="profile-avatar">S</div>
+            <div>
+              <strong>Student</strong>
+              <p>Learner account</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <header className="topbar">
+          <div className="breadcrumb">
+            <span>Workspace</span>
+            <span> / </span>
+            <strong>{labels[page]}</strong>
+          </div>
+          <div className="topbar-actions">
+            <span
+              className={`backend-indicator ${
+                backendStatus === 'Backend: healthy' ? 'connected' : 'offline'
+              }`}
+              title={backendStatus}
+            >
+              <span className="status-dot" />
+              {backendStatus}
+            </span>
+            <button
+              className="language-button"
+              onClick={() =>
+                setLanguage((current) =>
+                  current === 'English' ? 'à°¤à±†à°²à±à°—à±' : 'English',
+                )
+              }
+            >
+              ðŸŒ {language}
+            </button>
+            <div className="topbar-avatar">S</div>
+          </div>
+        </header>
+
+        <div className="page-container">{pageContent[page]()}</div>
+
+        <footer className="app-footer">
+          <span>Â© 2026 SkillBridge AI</span>
+          <span>Learning opportunities for everyone.</span>
+        </footer>
+      </main>
+    </div>
+  )
+}
+
+function CourseCard({
+  course,
+  onContinue,
+}: {
+  course: Course
+  onContinue: (id: number) => void
+}) {
+  return (
+    <article className="course-card">
+      <div
+        className="course-art"
+        style={{ backgroundColor: course.color }}
+      >
+        <span className="course-art-icon">
+          {course.category === 'Programming'
+            ? 'ðŸ’»'
+            : course.category === 'Technology'
+              ? 'ðŸŒ'
+              : course.category === 'Soft Skills'
+                ? 'ðŸ—£ï¸'
+                : 'ðŸ§©'}
+        </span>
+        <span className="course-level">{course.level}</span>
+      </div>
+      <div className="course-card-body">
+        <span className="course-category">{course.category}</span>
+        <h3>{course.title}</h3>
+        <p className="course-duration">â—· {course.duration}</p>
+        <div className="course-progress-label">
+          <span>Progress</span>
+          <strong>{course.progress}%</strong>
+        </div>
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${course.progress}%` }}
+          />
+        </div>
+        <button
+          className="course-button"
+          onClick={() => onContinue(course.id)}
+          disabled={course.progress === 100}
+        >
+          {course.progress === 100
+            ? 'âœ“ Completed'
+            : course.progress === 0
+              ? 'Start Learning â†’'
+              : 'Continue Learning â†’'}
+        </button>
+      </div>
+    </article>
+  )
+}
+
+export default App
