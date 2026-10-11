@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import './index.css'
 import {
   getCourseProgress,
@@ -867,7 +867,7 @@ function App() {
     )
   }
 
-  const pageContent: Record<Page, () => JSX.Element> = {
+ const pageContent: Record<Page, () => ReactElement> = {
     Home: renderHome,
     Courses: renderCourses,
     Assessment: renderAssessment,
