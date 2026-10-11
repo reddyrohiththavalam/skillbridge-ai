@@ -19,7 +19,7 @@ type Course = {
 }
 
 type Page = 'Home' | 'Courses' | 'Assessment' | 'AI Tutor' | 'Jobs'
-type Language = 'English' | 'à°¤à±†à°²à±à°—à±'
+type Language = 'English' | 'Telugu'
 
 type Question = {
   question: string
@@ -130,16 +130,17 @@ const englishLabels: Record<string, string> = {
 }
 
 const teluguLabels: Record<string, string> = {
-  Home: 'à°¹à±‹à°®à±',
-  Courses: 'à°•à±‹à°°à±à°¸à±à°²à±',
-  Assessment: 'à°ªà°°à±€à°•à±à°·',
-  'AI Tutor': 'AI à°—à±à°°à±à°µà±',
-  Jobs: 'à°‰à°¦à±à°¯à±‹à°—à°¾à°²à±',
-  welcome: 'à°®à±€ à°­à°µà°¿à°·à±à°¯à°¤à±à°¤à±à°¨à± à°¨à°¿à°°à±à°®à°¿à°‚à°šà±à°•à±‹à°‚à°¡à°¿',
-  subtitle: 'à°¨à±‡à°°à±à°šà±à°•à±‹à°‚à°¡à°¿. à°¨à±ˆà°ªà±à°£à±à°¯à°¾à°²à°¨à± à°ªà±†à°‚à°šà±à°•à±‹à°‚à°¡à°¿. à°‰à°¦à±à°¯à±‹à°— à°…à°µà°•à°¾à°¶à°¾à°²à°¨à± à°ªà±Šà°‚à°¦à°‚à°¡à°¿.',
-  continue: 'à°¨à±‡à°°à±à°šà±à°•à±‹à°µà°¡à°‚ à°•à±Šà°¨à°¸à°¾à°—à°¿à°‚à°šà°‚à°¡à°¿',
-  allCourses: 'à°…à°¨à±à°¨à°¿ à°•à±‹à°°à±à°¸à±à°²à±',
-  search: 'à°•à±‹à°°à±à°¸à±à°²à°¨à± à°µà±†à°¤à°•à°‚à°¡à°¿...',
+  Home: 'హోమ్',
+  Courses: 'కోర్సులు',
+  Assessment: 'నైపుణ్య పరీక్ష',
+  'AI Tutor': 'AI గురువు',
+  Jobs: 'ఉద్యోగాలు',
+  welcome: 'మీ భవిష్యత్తును నిర్మించుకోండి',
+  subtitle:
+    'నేర్చుకోండి. నైపుణ్యాలను పెంచుకోండి. ఉద్యోగ అవకాశాలను పొందండి.',
+  continue: 'నేర్చుకోవడం కొనసాగించండి',
+  allCourses: 'అన్ని కోర్సులు',
+  search: 'కోర్సులను వెతకండి...',
 }
 
 function clampProgress(value: unknown): number {
@@ -169,7 +170,7 @@ function App() {
   >([])
 
   const labels =
-    language === 'à°¤à±†à°²à±à°—à±' ? teluguLabels : englishLabels
+    language === 'Telugu' ? teluguLabels : englishLabels
 
   useEffect(() => {
     let cancelled = false
@@ -217,9 +218,7 @@ function App() {
 
     async function checkBackend() {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/health`,
-        )
+        const response = await fetch(`${API_BASE_URL}/health`)
 
         if (!response.ok) {
           throw new Error('Backend request failed')
@@ -413,12 +412,12 @@ function App() {
               onClick={() => setPage('Courses')}
               type="button"
             >
-              {labels.continue} â†’
+              {labels.continue} →
             </button>
           </div>
 
           <div className="welcome-illustration" aria-hidden="true">
-            <div className="illustration-circle">ðŸŽ“</div>
+            <div className="illustration-circle">🎓</div>
             <div className="illustration-caption">
               Learn today. Lead tomorrow.
             </div>
@@ -427,25 +426,25 @@ function App() {
 
         <section className="stats-grid">
           <StatCard
-            icon="ðŸ“š"
+            icon="📚"
             label="Available Courses"
             value={courses.length}
           />
 
           <StatCard
-            icon="ðŸŽ¯"
+            icon="🎯"
             label="Courses Started"
             value={courses.filter((c) => c.progress > 0).length}
           />
 
           <StatCard
-            icon="ðŸ†"
+            icon="🏆"
             label="Courses Completed"
             value={courses.filter((c) => c.progress === 100).length}
           />
 
           <StatCard
-            icon="âš¡"
+            icon="⚡"
             label="Average Progress"
             value={`${averageProgress}%`}
           />
@@ -462,7 +461,7 @@ function App() {
             onClick={() => setPage('Courses')}
             type="button"
           >
-            View all â†’
+            View all →
           </button>
         </section>
 
@@ -493,7 +492,7 @@ function App() {
             <span className="eyebrow">PERSONALIZED FOR YOU</span>
 
             <h2>
-              âœ¨ Recommended next: {recommendedCourse.title}
+              ✨ Recommended next: {recommendedCourse.title}
             </h2>
 
             <p>
@@ -523,7 +522,7 @@ function App() {
               }
               type="button"
             >
-              Continue recommended course â†’
+              Continue recommended course →
             </button>
           </section>
         )}
@@ -540,7 +539,7 @@ function App() {
               onClick={() => setPage('Assessment')}
               type="button"
             >
-              ðŸ“ Take Assessment
+              📝 Take Assessment
             </button>
 
             <button
@@ -548,7 +547,7 @@ function App() {
               onClick={() => setPage('AI Tutor')}
               type="button"
             >
-              âœ¨ Ask Learning Tutor
+              ✨ Ask Learning Tutor
             </button>
 
             <button
@@ -556,7 +555,7 @@ function App() {
               onClick={() => setPage('Jobs')}
               type="button"
             >
-              ðŸ’¼ Explore Careers
+              💼 Explore Careers
             </button>
           </div>
         </section>
@@ -576,7 +575,7 @@ function App() {
         </section>
 
         <div className="search-bar">
-          <span aria-hidden="true">ðŸ”Ž</span>
+          <span aria-hidden="true">🔎</span>
 
           <input
             value={search}
@@ -614,7 +613,7 @@ function App() {
 
         {filteredCourses.length === 0 && (
           <div className="empty-state">
-            <span aria-hidden="true">ðŸ”Ž</span>
+            <span aria-hidden="true">🔎</span>
             <h3>No courses found</h3>
             <p>Try another search term.</p>
           </div>
@@ -639,7 +638,7 @@ function App() {
         <section className="assessment-card">
           {quizFinished ? (
             <div className="quiz-result">
-              <div className="result-icon">ðŸ†</div>
+              <div className="result-icon">🏆</div>
               <h2>Assessment complete!</h2>
 
               <p>
@@ -706,7 +705,7 @@ function App() {
                     type="button"
                   >
                     <span className="option-circle" aria-hidden="true">
-                      {selectedAnswer === option ? 'â—' : 'â—‹'}
+                      {selectedAnswer === option ? '●' : '○'}
                     </span>
                     {option}
                   </button>
@@ -721,7 +720,7 @@ function App() {
               >
                 {currentQuestion === questions.length - 1
                   ? 'Finish assessment'
-                  : 'Next question â†’'}
+                  : 'Next question →'}
               </button>
             </>
           )}
@@ -744,12 +743,12 @@ function App() {
         <section className="tutor-card">
           <div className="tutor-header">
             <div className="tutor-avatar" aria-hidden="true">
-              âœ¨
+              ✨
             </div>
 
             <div>
               <h2>SkillBridge Learning Assistant</h2>
-              <p>Demo tutor Â· Instant practice guidance</p>
+              <p>Demo tutor · Instant practice guidance</p>
             </div>
           </div>
 
@@ -789,7 +788,7 @@ function App() {
                 </div>
 
                 <div className="assistant-message">
-                  <strong>âœ¨ Learning Assistant</strong>
+                  <strong>✨ Learning Assistant</strong>
                   <p>{message.answer}</p>
                 </div>
               </div>
@@ -811,7 +810,7 @@ function App() {
             />
 
             <button className="primary-button" type="submit">
-              Send â†‘
+              Send ↑
             </button>
           </form>
         </section>
@@ -831,7 +830,7 @@ function App() {
         </section>
 
         <div className="notice-banner">
-          â„¹ï¸ These are sample job listings for demonstration, not verified
+          ℹ️ These are sample job listings for demonstration, not verified
           live vacancies. Check employers' official websites before applying.
         </div>
 
@@ -839,7 +838,7 @@ function App() {
           {jobs.map((job) => (
             <article className="job-card" key={job.title}>
               <div className="job-icon" aria-hidden="true">
-                ðŸ’¼
+                💼
               </div>
 
               <div className="job-details">
@@ -868,7 +867,7 @@ function App() {
     )
   }
 
- const pageContent: Record<Page, () => ReactElement> = {
+  const pageContent: Record<Page, () => ReactElement> = {
     Home: renderHome,
     Courses: renderCourses,
     Assessment: renderAssessment,
@@ -888,7 +887,7 @@ function App() {
             <h2>
               SkillBridge<span>AI</span>
             </h2>
-            <p>Learn Â· Grow Â· Succeed</p>
+            <p>Learn · Grow · Succeed</p>
           </div>
         </div>
 
@@ -897,11 +896,11 @@ function App() {
         <nav className="navigation" aria-label="Main navigation">
           {(
             [
-              ['Home', 'âŒ‚'],
-              ['Courses', 'â–¤'],
-              ['Assessment', 'âœ“'],
-              ['AI Tutor', 'âœ§'],
-              ['Jobs', 'â†—'],
+              ['Home', '⌂'],
+              ['Courses', '▤'],
+              ['Assessment', '✓'],
+              ['AI Tutor', '✧'],
+              ['Jobs', '↗'],
             ] as [Page, string][]
           ).map(([item, icon]) => (
             <button
@@ -924,7 +923,7 @@ function App() {
         <div className="sidebar-bottom">
           <div className="sidebar-help">
             <div className="help-icon" aria-hidden="true">
-              ðŸ’¡
+              💡
             </div>
             <strong>Keep growing!</strong>
             <p>Small steps every day create big results.</p>
@@ -968,13 +967,13 @@ function App() {
               className="language-button"
               onClick={() =>
                 setLanguage((current) =>
-                  current === 'English' ? 'à°¤à±†à°²à±à°—à±' : 'English',
+                  current === 'English' ? 'Telugu' : 'English',
                 )
               }
               type="button"
               aria-label="Change application language"
             >
-              ðŸŒ {language === 'English' ? 'à°¤à±†à°²à±à°—à±' : 'English'}
+              🌐 {language === 'English' ? 'తెలుగు' : 'English'}
             </button>
 
             <div className="topbar-avatar" aria-hidden="true">
@@ -986,7 +985,7 @@ function App() {
         <div className="page-container">{pageContent[page]()}</div>
 
         <footer className="app-footer">
-          <span>Â© 2026 SkillBridge AI</span>
+          <span>© 2026 SkillBridge AI</span>
           <span>Learning opportunities for everyone.</span>
         </footer>
       </main>
@@ -1025,12 +1024,12 @@ function CourseCard({
 }) {
   const icon =
     course.category === 'Programming'
-      ? 'ðŸ’»'
+      ? '💻'
       : course.category === 'Technology'
-        ? 'ðŸŒ'
+        ? '🌐'
         : course.category === 'Soft Skills'
-          ? 'ðŸ—£ï¸'
-          : 'ðŸ§©'
+          ? '🗣️'
+          : '🧩'
 
   return (
     <article className="course-card">
@@ -1047,7 +1046,7 @@ function CourseCard({
       <div className="course-card-body">
         <span className="course-category">{course.category}</span>
         <h3>{course.title}</h3>
-        <p className="course-duration">â—· {course.duration}</p>
+        <p className="course-duration">◷ {course.duration}</p>
 
         <div className="course-progress-label">
           <span>Progress</span>
@@ -1075,10 +1074,10 @@ function CourseCard({
           type="button"
         >
           {course.progress === 100
-            ? 'âœ“ Completed'
+            ? '✓ Completed'
             : course.progress === 0
-              ? 'Start learning â†’'
-              : 'Continue learning â†’'}
+              ? 'Start learning →'
+              : 'Continue learning →'}
         </button>
       </div>
     </article>
